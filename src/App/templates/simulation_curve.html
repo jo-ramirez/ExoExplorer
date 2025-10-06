@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="es" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Curvas de luz sintéticas • Exoplanetas</title>
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root{
+      --bs-body-bg: #0b0f0c;           /* negro verdoso */
+      --bs-body-color: #cfeadc;        /* texto verde pálido */
+      --accent: #00e676;               /* verde neón */
+      --accent-2: #00b35a;
+      --card-bg: #101613;              /* paneles */
+      --muted: #9fd4b9;                /* labels, ejes */
+    }
+    body{background: radial-gradient(1200px 800px at 80% -10%, rgba(0,230,118,.08), transparent 60%) var(--bs-body-bg);}    
+    .navbar{background: linear-gradient(180deg, rgba(0,230,118,.12), rgba(0,0,0,.0)); border-bottom: 1px solid rgba(0,230,118,.15);} 
+    .navbar .navbar-brand{color: var(--accent);}   
+    .form-label,.form-text{color: var(--muted);}    
+    .card{background-color: var(--card-bg); border: 1px solid rgba(0,230,118,.15);} 
+    .btn-accent{--bs-btn-color:#08140f; --bs-btn-bg:var(--accent); --bs-btn-border-color:var(--accent); --bs-btn-hover-bg:var(--accent-2); --bs-btn-hover-border-color:var(--accent-2);} 
+    .range-accent::-webkit-slider-thumb{background: var(--accent);} 
+    .range-accent::-moz-range-thumb{background: var(--accent);} 
+    .link-accent{color: var(--accent);} 
+    .form-range::-webkit-slider-runnable-track{background: rgba(0,230,118,.25);} 
+    .form-select, .form-control{background-color:#0e1512; color:#dff7ec; border-color: rgba(0,230,118,.25);} 
+    .form-select:focus, .form-control:focus{box-shadow: 0 0 0 .25rem rgba(0,230,118,.25); border-color: var(--accent);} 
+    .badge-accent{background: rgba(0,230,118,.2); border:1px solid rgba(0,230,118,.5); color: var(--accent);} 
+    .footer{color:#86bfa7;}
+    canvas{max-height: 56vh;}
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand fw-semibold" href="#">Curvas de luz sintéticas</a>
+    </div>
+  </nav>
+
+  <main class="container my-4">
+    <div class="row g-4">
+      <!-- Panel de controles -->
+      <div class="col-12 col-lg-5">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="card-title mb-0">Parámetros</h5>
+              <span class="badge badge-accent">Gaussiana / Lorentziana</span>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Modelo</label>
+                <select id="model" class="form-select">
+                  <option value="gaussian">   Gaussiana   </option>
+                  <option value="lorentzian"> Lorentziana </option>
+                </select>
+              </div>
+
+              <div class="col-6">
+                <label for="amplitude" class="form-label">Amplitud | Profundidad</label>
+                <input type="number" step="0.0001" id="amplitude" class="form-control" value="0.01" />
+                <div class="form-text">Fracción de flujo (p.ej. 0.01 = 1%)</div>                
+              </div>
+              <div class="col-6">
+                <label for="center" class="form-label">Centro t₀</label>
+                <input type="number" step="0.01" id="center" class="form-control" value="0.0" />
+              </div>
+              <div class="col-6">
+                <label for="width" class="form-label">Ancho (σ | γ)</label>
+                <input type="number" step="0.001" id="width" class="form-control" value="0.1" />
+                <div class="form-text">σ para Gauss, γ para Lorentz</div>
+              </div>
+
+              <div class="col-6">
+                <label for="baseline" class="form-label">Baseline</label>
+                <input type="number" step="0.0001" id="baseline" class="form-control" value="1.0" />
+              </div>
+              <div class="col-12">
+                <label for="noise" class="form-label">Ruido (σ)</label>
+                <input type="number" step="0.0001" id="noise" class="form-control" value="0.0005" />
+              </div>
+              <div class="col-12">
+                <label for="symmetry" class="form-label">Simetría</label>
+                <input type="number" step="0.1" id="symmetry" class="form-control" value="1.0" />
+                <div class="form-text">1.0 = simétrica</div>
+              </div>
+              <div class="col-12 d-flex gap-2">
+                <button id="btnGenerate" class="btn btn-accent">Generar</button>
+                <button id="btnReset" class="btn btn-outline-success">Reset</button>
+                <button id="btnCSV" class="btn btn-outline-success ms-auto" title="Descargar CSV">CSV</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel del gráfico -->
+      <div class="col-12 col-lg-7">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="card-title mb-0">Vista previa</h5>
+              <small class="text-uppercase" id="modelBadge" style="letter-spacing:.08em;color:var(--muted)">Gaussiana</small>
+            </div>
+            <canvas id="chart"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="container my-4 footer small">
+    <span>Consejo: usa «Tránsito (dip)» con amplitud 0.01–0.03 para simular ocultaciones tipo exoplaneta.</span>
+  </footer>
+
+  <script>
+    // Utilidades matemáticas
+    function gaussian(x, mu, sigma){
+      const z = (x - mu) / sigma;
+      return Math.exp(-0.5 * z * z);
+    }
+    function lorentzian(x, x0, gamma){
+      return (gamma * gamma) / ( (x - x0) * (x - x0) + gamma * gamma );
+    }
+    function randn(){ // Box-Muller
+      let u = 0, v = 0;
+      while(u === 0) u = Math.random();
+      while(v === 0) v = Math.random();
+      return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    }
+
+    // DOM refs
+    const el = (id)=>document.getElementById(id);
+    const model = el('model');
+    const shape = el('shape');
+    const amplitude = el('amplitude');
+    const center = el('center');
+    const width = el('width');
+    const baseline = el('baseline');
+    const noise    = el('noise');
+    const symmetry = el('symmetry');
+
+    // Chart
+    const ctx = document.getElementById('chart');
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label:'Flux', data: [], borderWidth: 2, tension: .25 }] },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: getComputedStyle(document.documentElement).getPropertyValue('--muted') } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        interaction: { intersect: false, mode: 'nearest' },
+        scales: {
+          x: {
+            title: { display: true, text: 'Fase (JD)' },
+            grid: { color: 'rgba(0,230,118,.1)' },
+            ticks: { 
+              color: '#9fd4b9',
+              maxTicksLimit: 9 
+            },
+            title: { color: '#9fd4b9' }
+          },
+          y: {
+            title: { display: true, text: 'Flujo relativo' },
+            grid: { color: 'rgba(0,230,118,.08)' },
+            ticks: { color: '#9fd4b9' },
+            title: { color: '#9fd4b9' }
+          }
+        },
+        elements: { point: { radius: 0 } },
+      }
+    });
+
+    function generate() {
+      const mdl = model.value;
+      const A = Number(amplitude .value);
+      const t0 = Number(center.value);
+      const w = Number(width.value);
+      const base = Number(baseline.value);
+      const n = Number(noise.value);
+      const sym = Number(symmetry.value); // Nuevo parámetro de simetría
+      const t0min = -2;
+      const t0max = 2;
+      const dt = 1e-2;
+
+      // Validaciones simples
+      if (w <= 0 || dt <= 0) {
+        alert('El ancho y la cadencia deben ser > 0');
+        return;
+      }
+
+      if (t0min >= t0max) {
+        alert('t min debe ser menor que t max');
+        return;
+      }
+
+      const T = [];
+      const F = [];
+      for (let t = t0min; t <= t0max + 1e-9; t += dt) {
+        let kernel;
+        if (mdl === 'gaussian') {
+          kernel = gaussian(t, t0, w);
+        } else if (mdl === 'lorentzian') {
+          kernel = lorentzian(t, t0, w);
+        } else {
+          // Implementación de curva personalizada con simetría
+          const slope = t < t0 ? Math.abs(t - t0) / (w * sym) : Math.abs(t - t0) / (w / sym);
+          kernel = Math.max(0, 1 - slope); // Forma de "V" o "U" ajustada por simetría
+        }
+
+        let signal = base - A * kernel;
+        if (n > 0) signal += n * randn();
+        T.push(t);
+        F.push({ x: t, y: signal });
+      }
+
+      // Actualiza gráfico
+      chart.data.labels = T;
+      chart.data.datasets[0].label = `${mdl === 'gaussian' ? 'Gaussiana' : mdl === 'lorentzian' ? 'Lorentziana' : 'Personalizada'}`;
+      chart.data.datasets[0].data = F;
+      chart.data.datasets[0].borderColor = getComputedStyle(document.documentElement).getPropertyValue('--accent');
+      chart.update();
+
+      document.getElementById('modelBadge').textContent = mdl === 'gaussian' ? 'Gaussiana' : mdl === 'lorentzian' ? 'Lorentziana' : 'Personalizada';
+
+      // guarda última tabla para exportar
+      window.__lastData = F;
+    }
+
+    function toCSV(){
+      const rows = window.__lastData || [];
+      if(!rows.length){ alert('Primero genera una curva.'); return; }
+      let csv = 't,flux\n' + rows.map(p=>`${p.x},${p.y}`).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'synthetic_lightcurve.csv'; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Botones
+    document.getElementById('btnGenerate').addEventListener('click', generate);
+    document.getElementById('btnCSV').addEventListener('click', toCSV);
+    document.getElementById('btnReset').addEventListener('click', () => {
+      model.value = 'gaussian';
+      shape.value = 'dip';
+      amplitude.value = 0.01;
+      center.value = 0.0;
+      width.value = 0.1;
+      baseline.value = 1.0;
+      noise.value = 0.0005;
+      tmin.value = -1.0;
+      tmax.value = 1.0;
+      generate();
+    });
+
+    generate();
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
