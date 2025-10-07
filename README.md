@@ -40,7 +40,7 @@ Visualization and interpretation of results
 ### How to run
 
 ```bash
-pythonn3 -m pip install requiremets.txt
+python3 -m pip install requiremets.txt
 python3 run_server.py
 ```
 ---
