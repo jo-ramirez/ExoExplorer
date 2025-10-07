@@ -10,7 +10,6 @@ It focuses on analyzing light curves from the **Kepler Object of Interest (KOI)*
 The system implements a complete workflow for preprocessing, feature extraction, and statistical classification of photometric events.  
 It uses a **Random Forest Classifier**, optimized for handling physical variables derived from the light curve shape — such as **depth**, **duration**, **asymmetry**, and **signal-to-noise ratio (SNR)**.  
 This approach emphasizes interpretability and robustness against instrumental noise, improving the reliability of candidate detection and validation.
----
 
 ### Workflow
 
