@@ -3,6 +3,7 @@
 ---
 
 ### Overview  
+
 **ExoExplorer** is a project developed for the **NASA Space Apps Challenge 2025 – Concepción**.  
 It focuses on analyzing light curves from the **Kepler Object of Interest (KOI)** catalog to distinguish between **real exoplanet candidates** and **false positives**.  
 
